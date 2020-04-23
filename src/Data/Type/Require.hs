@@ -14,9 +14,9 @@ doing type-level progamming in Haskell.
 
 This was originally developed for the AspectAG library (attribute
 grammars in the form of an EDSL).
-Both in AspectAG and in PHER library (which is again, an abstraction
+Both in AspectAG and in our Record library (which is again, an abstraction
 synthesized from the AspectAG) are examples of how to use
-'Require'. The name 'Require' comes from TODO.
+'Require'.
 Some simpler examples are presented in Example modules in this package.
 
 Let us inline one in this documentation file:
@@ -103,7 +103,6 @@ operation. When defining it, we have in scope 'n', 'k', and 'a',
 everything needed to write a good type error using 'GHC.TypeLits'
 infraestructure.
 
-TODO
 
 > instance
 >   Require (OpError (Text "Type error!" index out of bound")) ctx
@@ -169,13 +168,12 @@ type family ShowCTX (ctx :: [ErrorMessage]) :: ErrorMessage where
   ShowCTX '[] = Text ""
   ShowCTX (m ': ms) = m :$$: ShowCTX ms
 
--- | TODO
-type family ShowEM (m :: ErrorMessage) :: ErrorMessage
-
 -- | Show for types
-type family ShowT (t :: k) :: ErrorMessage
-type instance ShowT (t :: Type) = ShowType t
-type instance ShowT (t :: Symbol) = Text t
+type family ShowTE (t :: k) :: ErrorMessage
+type instance ShowTE (t :: Type) = ShowType t
+type instance ShowTE (t :: Symbol) = Text t
+
+
 
 -- | A common constraint is to have a |Requirement| to be fullfilled,
 -- and something to unify with the result of the operation.  
@@ -204,8 +202,8 @@ instance RequireEqRes t1 t2 ctx
 type family RequireEqRes (t1 :: k) (t2 :: k)
                      (ctx :: [ErrorMessage]) ::  Constraint where
   RequireEqRes t1 t2 ctx = If (t1 `Equal` t2) (() :: Constraint)
-    (Require (OpError (Text "\n   " :<>: ShowT t1
-                       :<>: Text "\n/= " :<>: ShowT t2)) ctx)
+    (Require (OpError (Text "\n   " :<>: ShowTE t1
+                       :<>: Text "\n/= " :<>: ShowTE t2)) ctx)
 
 type family Equal (a :: k) (b :: k') :: Bool where
   Equal a a = True
