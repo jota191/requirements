@@ -1,9 +1,13 @@
+> {-# LANGUAGE FlexibleContexts #-}
+> {-# LANGUAGE DataKinds #-}
+> {-# LANGUAGE TypeOperators #-}
 > {-# LANGUAGE FlexibleInstances #-}
 > {-# LANGUAGE GADTs #-}
 > {-# LANGUAGE UndecidableInstances #-}
 > {-# LANGUAGE TypeFamilies #-}
 > {-# LANGUAGE MultiParamTypeClasses #-}
 > {-# LANGUAGE TypeApplications #-}
+> {-# LANGUAGE AllowAmbiguousTypes #-} -- this is for the colour c
 
 > module Figures where
 
@@ -19,8 +23,8 @@
 >   = r == r' && g == g' && b == b'
 
 > data Dim = R2 | R3
-> type instance ShowT R2 = Text "R2"
-> type instance ShowT R3 = Text "R3"
+> type instance ShowTE R2 = Text "R2"
+> type instance ShowTE R3 = Text "R3"
 
 > data family Figure (d :: Dim) (c :: Color)
 
@@ -72,7 +76,7 @@ combine (Circle 1 1 1) (Sphere 1 1 1 1) ->
 > instance
 >   Require (OpError
 >   (Text "Dimensional error:" :$$: Text "cannot combine figure of dimension "
->   :<>: ShowT d :<>: Text " and dimension " :<>: ShowT d')) ctx
+>   :<>: ShowTE d :<>: Text " and dimension " :<>: ShowTE d')) ctx
 >   => Require (OpEqDim' 'False d d') ctx
 
 
@@ -95,7 +99,7 @@ an sloppy error:
 
 > combine' f f' = req (Proxy @( '[ Text "combining.." ] )) (OpCombine f f')
 
-combine (Circle 1 1 1) (Sphere 1 1 1 1) ->
+combine' (Circle 1 1 1) (Sphere 1 1 1 1) ->
 
 • Error: Dimensional error:
          cannot combine figure of dimension R2 and dimension R3
