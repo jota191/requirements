@@ -19,6 +19,8 @@
 >   = r == r' && g == g' && b == b'
 
 > data Dim = R2 | R3
+> type instance ShowT R2 = Text "R2"
+> type instance ShowT R3 = Text "R3"
 
 > data family Figure (d :: Dim) (c :: Color)
 
@@ -60,19 +62,49 @@ combine (Circle 1 1 1) (Sphere 1 1 1 1) ->
 >     undefined
 
 > instance
+>   (Require (OpEqDim' (d == d') d d')) ctx
+>   =>
 >   Require (OpEqDim d d') ctx where
 >   type ReqR (OpEqDim d d') = ReqR (OpEqDim' (d == d') d d')
 
 > instance Require (OpEqDim' 'True  d d') ctx where {}
->
-> instance Require (OpEqCol c c') ctx where {}
-> instance Require (OpEqCol' 'True  c c') ctx where {}
-> instance Require (OpEqCol' 'False c c') ctx where {}
 
 > instance
->   Require (OpError (Text "Dimensional error: cannot combine figure of dimension "
+>   Require (OpError
+>   (Text "Dimensional error:" :$$: Text "cannot combine figure of dimension "
 >   :<>: ShowT d :<>: Text " and dimension " :<>: ShowT d')) ctx
 >   => Require (OpEqDim' 'False d d') ctx
 
 
+> instance
+>   (Require (OpEqCol' (Equ c c') c c')) ctx
+>   =>
+>   Require (OpEqCol c c') ctx where
+>   type ReqR (OpEqCol c c') = ReqR (OpEqCol' (Equ c c') c c')
+
+> instance Require (OpEqCol' 'True  c c') ctx where {}
+
+
+an sloppy error:
+
+> instance
+>   Require (OpError
+>   (Text "Error, combined images must be of the same color")) ctx
+>   => Require (OpEqCol' 'False c c') ctx
+
+
 > combine' f f' = req (Proxy @( '[ Text "combining.." ] )) (OpCombine f f')
+
+combine (Circle 1 1 1) (Sphere 1 1 1 1) ->
+
+• Error: Dimensional error:
+         cannot combine figure of dimension R2 and dimension R3
+  trace: combining..
+
+
+
+combine' (Circle 1 1 1 :: Figure R2 (RGB 1 1 1))
+         (Circle 1 1 1 :: Figure R2 (RGB 1 1 2)) ->
+
+• Error: Error, combined images must be of the same color
+  trace: combining..
