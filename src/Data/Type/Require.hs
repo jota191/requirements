@@ -212,3 +212,6 @@ type family Equal (a :: k) (b :: k') :: Bool where
 
 -- | overloaded type equality
 type family Equ (a :: k) (b :: k) :: Bool
+
+
+emptyCtx = Proxy :: Proxy '[ Text ""]
