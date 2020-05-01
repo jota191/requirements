@@ -156,7 +156,9 @@ data OpError (m :: ErrorMessage) :: Type where {}
 -- | Failing and printing of an |OpError| requirement.
 instance (TypeError
           (Text "Error: " :<>: m :$$:
-           Text "trace: " :<>: ShowCTX ctx))
+           If (ShowCTX ctx == Text "")
+              (Text "")
+              (Text "trace: " :<>: ShowCTX ctx)))
   =>
   Require (OpError m) ctx where
   type ReqR (OpError m) = ()
@@ -166,7 +168,11 @@ instance (TypeError
 -- | Formatting of context printing.
 type family ShowCTX (ctx :: [ErrorMessage]) :: ErrorMessage where
   ShowCTX '[] = Text ""
-  ShowCTX (m ': ms) = m :$$: ShowCTX ms
+  ShowCTX (Text m ': ms) =
+    Text (AppendSymbol m (FromText (ShowCTX ms)))
+
+type family FromText (t :: ErrorMessage) :: Symbol where
+  FromText (Text t) = t
 
 -- | Show for types
 type family ShowTE (t :: k) :: ErrorMessage
