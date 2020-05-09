@@ -155,10 +155,11 @@ data OpError (m :: ErrorMessage) :: Type where {}
 
 -- | Failing and printing of an |OpError| requirement.
 instance (TypeError
-          (Text "Error: " :<>: m :$$:
-           If (ShowCTX ctx == Text "")
-              (Text "")
-              (Text "trace: " :<>: ShowCTX ctx)))
+          (Text "trace: " :<>: ShowCTX ctx))
+          -- (Text "Error: " :<>: m :$$:
+          --  If (ShowCTX ctx == Text "")
+          --     (Text "")
+          --     (Text "trace: " :<>: ShowCTX ctx)))
   =>
   Require (OpError m) ctx where
   type ReqR (OpError m) = ()
