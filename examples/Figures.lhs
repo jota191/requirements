@@ -97,7 +97,7 @@ an sloppy error:
 >   => Require (OpEqCol' 'False c c') ctx
 
 
-> combine' f f' = req (Proxy @( '[ Text "combining.." ] )) (OpCombine f f')
+> combine' f f' = req (Proxy @( '[ Text "combining"] )) (OpCombine f f')
 
 combine' (Circle 1 1 1) (Sphere 1 1 1 1) ->
 

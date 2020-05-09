@@ -155,23 +155,30 @@ data OpError (m :: ErrorMessage) :: Type where {}
 
 -- | Failing and printing of an |OpError| requirement.
 instance (TypeError
-          (Text "trace: " :<>: ShowCTX ctx))
-          -- (Text "Error: " :<>: m :$$:
-          --  If (ShowCTX ctx == Text "")
-          --     (Text "")
-          --     (Text "trace: " :<>: ShowCTX ctx)))
+          (Text "Error: " :<>: m :$$:
+           If (IsEmptyCtx ctx)
+              (Text "")
+              (Text "trace: " :<>: ShowCTX ctx)))
   =>
   Require (OpError m) ctx where
   type ReqR (OpError m) = ()
   req _ _ = error "unreachable"
 
+type family IsEmptyCtx (ms :: [ErrorMessage]) :: Bool where
+  IsEmptyCtx '[] = True
+  IsEmptyCtx (m ': ms) = IsEmptyMsg m && IsEmptyCtx ms
 
--- | Formatting of context printing.
+type family IsEmptyMsg (m :: ErrorMessage) :: Bool where
+  IsEmptyMsg (Text "") = True
+  IsEmptyMsg (l :<>: r) = IsEmptyMsg l && IsEmptyMsg r
+  IsEmptyMsg other = False
+
+-- -- | Formatting of context printing.
 type family ShowCTX (ctx :: [ErrorMessage]) :: ErrorMessage where
   ShowCTX '[] = Text ""
-  ShowCTX (Text m ': ms) =
-    Text (AppendSymbol m (FromText (ShowCTX ms)))
-
+  ShowCTX (m ': ms) = m :$$: ShowCTX ms
+  
+  
 type family FromText (t :: ErrorMessage) :: Symbol where
   FromText (Text t) = t
 
@@ -222,3 +229,17 @@ type family Equ (a :: k) (b :: k) :: Bool
 
 
 emptyCtx = Proxy :: Proxy '[ Text ""]
+
+
+type Lala = ShowCTX
+               '[ ((('GHC.TypeLits.Text "syndef("
+                     'GHC.TypeLits.:<>: ((('GHC.TypeLits.Text "Attribute "
+                                           'GHC.TypeLits.:<>: 'GHC.TypeLits.Text "cst")
+                                          'GHC.TypeLits.:<>: 'GHC.TypeLits.Text ":")
+                                         'GHC.TypeLits.:<>: 'GHC.TypeLits.ShowType String))
+                    'GHC.TypeLits.:<>: 'GHC.TypeLits.Text ", ")
+                   'GHC.TypeLits.:<>: ((('GHC.TypeLits.Text "Non-Terminal "
+                                         'GHC.TypeLits.:<>: 'GHC.TypeLits.Text "Rose")
+                                        'GHC.TypeLits.:<>: 'GHC.TypeLits.Text "::Production ")
+                                       'GHC.TypeLits.:<>: 'GHC.TypeLits.Text "Node"))
+                  'GHC.TypeLits.:<>: 'GHC.TypeLits.Text ")" ]
