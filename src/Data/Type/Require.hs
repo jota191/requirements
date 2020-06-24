@@ -129,9 +129,7 @@ infraestructure.
 {-# LANGUAGE TypeApplications      #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
 
-module Data.Type.Require
- 
- where
+module Data.Type.Require where
 
 import Data.Kind
 import Data.Proxy
@@ -187,8 +185,6 @@ type family ShowTE (t :: k) :: ErrorMessage
 type instance ShowTE (t :: Type) = ShowType t
 type instance ShowTE (t :: Symbol) = Text t
 
-
-
 -- | A common constraint is to have a |Requirement| to be fullfilled,
 -- and something to unify with the result of the operation.  
 type RequireR (op :: Type) (ctx:: [ErrorMessage]) (res :: Type)
@@ -223,23 +219,7 @@ type family Equal (a :: k) (b :: k') :: Bool where
   Equal a a = True
   Equal a b = False
 
-
 -- | overloaded type equality
 type family Equ (a :: k) (b :: k) :: Bool
 
-
 emptyCtx = Proxy :: Proxy '[ Text ""]
-
-
-type Lala = ShowCTX
-               '[ ((('GHC.TypeLits.Text "syndef("
-                     'GHC.TypeLits.:<>: ((('GHC.TypeLits.Text "Attribute "
-                                           'GHC.TypeLits.:<>: 'GHC.TypeLits.Text "cst")
-                                          'GHC.TypeLits.:<>: 'GHC.TypeLits.Text ":")
-                                         'GHC.TypeLits.:<>: 'GHC.TypeLits.ShowType String))
-                    'GHC.TypeLits.:<>: 'GHC.TypeLits.Text ", ")
-                   'GHC.TypeLits.:<>: ((('GHC.TypeLits.Text "Non-Terminal "
-                                         'GHC.TypeLits.:<>: 'GHC.TypeLits.Text "Rose")
-                                        'GHC.TypeLits.:<>: 'GHC.TypeLits.Text "::Production ")
-                                       'GHC.TypeLits.:<>: 'GHC.TypeLits.Text "Node"))
-                  'GHC.TypeLits.:<>: 'GHC.TypeLits.Text ")" ]
