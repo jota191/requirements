@@ -136,6 +136,8 @@ import Data.Proxy
 import GHC.TypeLits
 import Data.Type.Bool
 import Data.Type.Equality
+--import Type.Errors
+
 
 -- | Require class. Use this when a /dependent type/ (/a la/ Haskell)
 -- /requires/ some type level property for a function to be defined to
@@ -165,6 +167,7 @@ instance (TypeError
 type family IsEmptyCtx (ms :: [ErrorMessage]) :: Bool where
   IsEmptyCtx '[] = True
   IsEmptyCtx (m ': ms) = IsEmptyMsg m && IsEmptyCtx ms
+  IsEmptyCtx _ = True
 
 type family IsEmptyMsg (m :: ErrorMessage) :: Bool where
   IsEmptyMsg (Text "") = True
@@ -172,18 +175,22 @@ type family IsEmptyMsg (m :: ErrorMessage) :: Bool where
   IsEmptyMsg other = False
 
 -- -- | Formatting of context printing.
-type family ShowCTX (ctx :: [ErrorMessage]) :: ErrorMessage where
-  ShowCTX '[] = Text ""
-  ShowCTX (m ': ms) = m :$$: ShowCTX ms
+type family ShowCTX (ctx :: k)  :: ErrorMessage where
+  ShowCTX ('[] :: [ErrorMessage]) = Text ""
+  ShowCTX ((m :: ErrorMessage) ': (ms :: [ErrorMessage])) = m :$$: ShowCTX ms
+  ShowCTX (m :: [ErrorMessage]) = Text ""
+
+-- type instance  ShowCTX (a :: Type) = Text ""
   
-  
-type family FromText (t :: ErrorMessage) :: Symbol where
-  FromText (Text t) = t
+type family FromEM (t :: ErrorMessage) :: Symbol where
+  FromEM (Text t) = t
+  FromEM _ = ""
 
 -- | Show for types
 type family ShowTE (t :: k) :: ErrorMessage
 type instance ShowTE (t :: Type) = ShowType t
 type instance ShowTE (t :: Symbol) = Text t
+
 
 -- | A common constraint is to have a |Requirement| to be fullfilled,
 -- and something to unify with the result of the operation.  
@@ -191,9 +198,54 @@ type RequireR (op :: Type) (ctx:: [ErrorMessage]) (res :: Type)
      = (Require op ctx, ReqR op ~ res)
 
 -- | 
-type RequireEq (t1 :: k )(t2 :: k) (ctx:: [ErrorMessage])
-    = (Require (OpEq t1 t2) ctx, t1 ~ t2)
+--type RequireEq (t1 :: k )(t2 :: k) (ctx:: [ErrorMessage])
+--    = (Require (OpEq t1 t2) ctx ) --0,
+  --   IfStuck (Equal t1 t2) (DelayError ('Text "error coso")) (NoErrorFcf))
 
+
+-- Exported operators.
+
+-- | Equality operator.
+--data OpEq t1 t2
+
+data OpEq' (cmp :: Bool) t1 t2
+
+type RequireEq (t1 :: k )(t2 :: k) (ctx:: [ErrorMessage])
+    = (AssertEq t1 t2 ctx , t1 ~ t2)
+
+type family AssertEq (t1 :: k)(t2 :: k) ctx :: Constraint where
+  AssertEq a a ctx = ()
+  AssertEq a b ctx = Require (OpError (Text "\n   " :<>: ShowTE a
+                       :<>: Text "\n/= " :<>: ShowTE b)) ctx  
+
+
+
+data Exp (a :: k) where Exp :: a -> Exp a
+type family Eval (exp :: Type) :: k
+
+data CondEq (a ::k) (b :: k) where
+  CondEq :: a -> b -> CondEq a b
+data RequireEqResF (a ::k) (b :: k) where
+  RequireEqResF :: a -> b -> RequireEqResF a b
+
+data EqMsg (a::k)(b::k) where EqMsg :: a -> b -> EqMsg a b
+type instance Eval (EqMsg t1 t2) =
+    (Text "\nEQMSG" :<>: ShowTE t1
+                       :<>: Text "\n/= " :<>: ShowTE t2)
+
+--type family RequireCondWithMsg (t :: k) (msg :: k') (ctx :: [ErrorMessage])
+--type instance RequireCondWithMsg (CondEq a b) (RequireEqRes)
+
+type family RequireEqWithMsg (t :: k) (t' :: k) (msg :: k -> k -> Type)
+  (ctx :: [ErrorMessage]) :: Constraint
+type instance RequireEqWithMsg t t' f ctx =
+  (AssertEq' t t' f ctx, t ~ t')
+   --If (t `Equal` t') (()::Constraint) (Require (OpError (Eval (f t t'))) ctx))
+type family AssertEq' (t1 :: k)(t2 :: k) (f :: k -> k -> Type) ctx :: Constraint
+  where
+  AssertEq' a a f ctx = ()
+  AssertEq' a b f ctx = Require (OpError (Eval (f a b))
+                                ) ctx
 
 -- Exported operators.
 
@@ -202,10 +254,10 @@ data OpEq t1 t2
 
 -- | implementation of Require instance for equality (the type family
 -- in the context implements the logic)
-instance RequireEqRes t1 t2 ctx
-  => Require (OpEq t1 t2) ctx where
-  type ReqR (OpEq t1 t2) = ()
-  req = undefined
+--instance RequireEqRes t1 t2 ctx
+--  => Require (OpEq t1 t2) ctx where
+--  type ReqR (OpEq t1 t2) = ()
+--  req = undefined
 
 -- | comparisson of types, given a trivially satisfying constraint if
 -- they are equal, or requiring an |OpError| otherwise.
