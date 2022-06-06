@@ -136,7 +136,6 @@ import Data.Proxy
 import GHC.TypeLits
 import Data.Type.Bool
 import Data.Type.Equality
---import Type.Errors
 
 
 -- | Require class. Use this when a /dependent type/ (/a la/ Haskell)
@@ -156,8 +155,6 @@ data OpError (m :: ErrorMessage) :: Type where {}
 -- | Failing and printing of an |OpError| requirement.
 instance (TypeError
           (Text "Error: " :<>: m :$$:
-           If (IsEmptyCtx ctx)
-              (Text "")
               (Text "trace: " :<>: ShowCTX ctx)))
   =>
   Require (OpError m) ctx where
@@ -166,7 +163,7 @@ instance (TypeError
 
 type family IsEmptyCtx (ms :: [ErrorMessage]) :: Bool where
   IsEmptyCtx '[] = True
-  IsEmptyCtx (m ': ms) = IsEmptyMsg m && IsEmptyCtx ms
+  IsEmptyCtx (m ': ms) = False -- IsEmptyMsg m && IsEmptyCtx ms
   IsEmptyCtx _ = True
 
 type family IsEmptyMsg (m :: ErrorMessage) :: Bool where
@@ -180,7 +177,6 @@ type family ShowCTX (ctx :: k)  :: ErrorMessage where
   ShowCTX ((m :: ErrorMessage) ': (ms :: [ErrorMessage])) = m :$$: ShowCTX ms
   ShowCTX (m :: [ErrorMessage]) = Text ""
 
--- type instance  ShowCTX (a :: Type) = Text ""
   
 type family FromEM (t :: ErrorMessage) :: Symbol where
   FromEM (Text t) = t
@@ -233,8 +229,6 @@ type instance Eval (EqMsg t1 t2) =
     (Text "\nEQMSG" :<>: ShowTE t1
                        :<>: Text "\n/= " :<>: ShowTE t2)
 
---type family RequireCondWithMsg (t :: k) (msg :: k') (ctx :: [ErrorMessage])
---type instance RequireCondWithMsg (CondEq a b) (RequireEqRes)
 
 type family RequireEqWithMsg (t :: k) (t' :: k) (msg :: k -> k -> Type)
   (ctx :: [ErrorMessage]) :: Constraint
@@ -275,3 +269,11 @@ type family Equal (a :: k) (b :: k') :: Bool where
 type family Equ (a :: k) (b :: k) :: Bool
 
 emptyCtx = Proxy :: Proxy '[ Text ""]
+
+appendCtx :: Proxy ctx -> Proxy ctx' -> Proxy (ctx :++ ctx')
+appendCtx Proxy Proxy = Proxy
+
+
+type family (:++) xs ys where
+  '[] :++ ys = ys
+  (x ': xs) :++ ys = x ': (xs :++ ys)

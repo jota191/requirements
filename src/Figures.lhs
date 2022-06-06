@@ -7,7 +7,9 @@
 > {-# LANGUAGE TypeFamilies #-}
 > {-# LANGUAGE MultiParamTypeClasses #-}
 > {-# LANGUAGE TypeApplications #-}
-> {-# LANGUAGE AllowAmbiguousTypes #-} -- this is for the colour c
+> {-# LANGUAGE ScopedTypeVariables #-}
+> {-# LANGUAGE AllowAmbiguousTypes #-}
+> {-# OPTIONS -Wno-missing-methods #-}
 
 > module Figures where
 
@@ -112,3 +114,38 @@ combine' (Circle 1 1 1 :: Figure R2 (RGB 1 1 1))
 
 • Error: Error, combined images must be of the same color
   trace: combining..
+
+> f1 = (Circle 2 2 2 :: Figure R2 (RGB 1 1 1))
+> f2 = (Sphere 2 2 2 2:: Figure R3 (RGB 1 1 1))
+
+> f = CFigure $ \Proxy  -> f1
+> f' = CFigure $ \Proxy -> f2
+
+> f'' = traceFig
+>    (\(_ :: Proxy (Text "tracefig!!!!!" : ctx)) -> Proxy :: Proxy ctx ) $ f'
+
+> tr = traceFig
+>    (\(_ :: Proxy (ctx)) -> Proxy :: Proxy (Text "tracefig!!!!!" : ctx) )
+
+> data CFigure d c (ctx :: [ErrorMessage])
+>  = CFigure {mkCFig :: Proxy ctx -> Figure d c}
+
+
+> combine''
+>   :: (Require (OpEqDim' (d == d') d d') (Text "lalo" :ctx),
+>       Require (OpEqCol' (Equ c c') c c') (Text "lalo" : ctx)) =>
+>      CFigure d c ctx -> CFigure d' c' ctx -> CFigure d c ctx
+> combine'' (CFigure f1) (CFigure f2)
+>   = CFigure $ \(a :: Proxy ctx) ->
+>           req (Proxy :: Proxy (Text "lalo" : ctx))
+>               (OpCombine (f1 a) (f2 a))
+
+
+> traceFig :: (Proxy ctx' -> Proxy ctx) -> CFigure d c ctx -> CFigure d c ctx'
+> traceFig fctx (CFigure f) = CFigure $ f . fctx
+
+
+
+Error:
+
+ > g = combine'' (tr $ tr f) (tr $ tr f'') -- (tr $ tr $ tr $ combine'' f f) f''
