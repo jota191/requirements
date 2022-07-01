@@ -163,8 +163,7 @@ instance (TypeError
 
 type family IsEmptyCtx (ms :: [ErrorMessage]) :: Bool where
   IsEmptyCtx '[] = True
-  IsEmptyCtx (m ': ms) = False -- IsEmptyMsg m && IsEmptyCtx ms
-  IsEmptyCtx _ = True
+  IsEmptyCtx (m ': ms) = False
 
 type family IsEmptyMsg (m :: ErrorMessage) :: Bool where
   IsEmptyMsg (Text "") = True
@@ -173,8 +172,8 @@ type family IsEmptyMsg (m :: ErrorMessage) :: Bool where
 
 -- -- | Formatting of context printing.
 type family ShowCTX (ctx :: [ErrorMessage])  :: ErrorMessage where
-  ShowCTX ('[]) = 'Text ""
-  ShowCTX ((m :: ErrorMessage) ': (ms :: [ErrorMessage])) = m :$$: ShowCTX ms
+  ShowCTX ((m :: ErrorMessage) ': (ms :: [ErrorMessage]))
+    = m :$$: ShowCTX ms
   ShowCTX (m :: [ErrorMessage]) = Text ""
 
   
@@ -234,12 +233,11 @@ type family RequireEqWithMsg (t :: k) (t' :: k) (msg :: k -> k -> Type)
   (ctx :: [ErrorMessage]) :: Constraint
 type instance RequireEqWithMsg t t' f ctx =
   (AssertEq' t t' f ctx, t ~ t')
-   --If (t `Equal` t') (()::Constraint) (Require (OpError (Eval (f t t'))) ctx))
-type family AssertEq' (t1 :: k)(t2 :: k) (f :: k -> k -> Type) ctx :: Constraint
+type family AssertEq' (t1 :: k)(t2 :: k)
+                      (f :: k -> k -> Type) ctx :: Constraint
   where
   AssertEq' a a f ctx = ()
-  AssertEq' a b f ctx = Require (OpError (Eval (f a b))
-                                ) ctx
+  AssertEq' a b f ctx = Require (OpError (Eval (f a b))) ctx
 
 -- Exported operators.
 
@@ -272,7 +270,6 @@ emptyCtx = Proxy :: Proxy '[ Text ""]
 
 appendCtx :: Proxy ctx -> Proxy ctx' -> Proxy (ctx :++ ctx')
 appendCtx Proxy Proxy = Proxy
-
 
 type family (:++) xs ys where
   '[] :++ ys = ys

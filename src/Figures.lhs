@@ -118,7 +118,7 @@ combine' (Circle 1 1 1 :: Figure R2 (RGB 1 1 1))
 > f1 = (Circle 2 2 2 :: Figure R2 (RGB 1 1 1))
 > f2 = (Sphere 2 2 2 2:: Figure R3 (RGB 1 1 1))
 
-> f = CFigure $ \Proxy  -> f1
+> f = (CFigure $ \Proxy  -> f1) :: CFigure 'R2 ('RGB 1 1 1) '[]
 > f' = CFigure $ \Proxy -> f2
 
 > f'' = traceFig
@@ -132,13 +132,13 @@ combine' (Circle 1 1 1 :: Figure R2 (RGB 1 1 1))
 
 
 > combine''
->   :: (Require (OpEqDim' (d == d') d d') (Text "lalo" :ctx),
->       Require (OpEqCol' (Equ c c') c c') (Text "lalo" : ctx)) =>
->      CFigure d c ctx -> CFigure d' c' ctx -> CFigure d c ctx
+>   :: (Require (OpEqDim' (d == d') d d') (Text "combine''" :ctx),
+>       Require (OpEqCol' (Equ c c') c c') (Text "combine''" : ctx)) =>
+>      CFigure d c ctx -> CFigure d' c' ctx' -> CFigure d c ctx
 > combine'' (CFigure f1) (CFigure f2)
 >   = CFigure $ \(a :: Proxy ctx) ->
->           req (Proxy :: Proxy (Text "lalo" : ctx))
->               (OpCombine (f1 a) (f2 a))
+>           req (Proxy :: Proxy (Text "combine''" : ctx))
+>               (OpCombine (f1 a) (f2 Proxy))
 
 
 > traceFig :: (Proxy ctx' -> Proxy ctx) -> CFigure d c ctx -> CFigure d c ctx'
@@ -149,3 +149,17 @@ combine' (Circle 1 1 1 :: Figure R2 (RGB 1 1 1))
 Error:
 
  > g = combine'' (tr $ tr f) (tr $ tr f'') -- (tr $ tr $ tr $ combine'' f f) f''
+
+
+Adding traces:
+
+> addMsg :: Proxy msg -> Proxy (msg ': ctx) -> Proxy ctx 
+> addMsg Proxy Proxy = Proxy
+
+> f11 = traceFig (addMsg (Proxy @(Text "11"))) f
+> f22 = traceFig (addMsg (Proxy @(Text "22"))) f
+
+
+> fcomb = traceFig (addMsg (Proxy @(Text "comb"))) $ combine'' f11 f22
+
+ > ferr = traceFig (addMsg (Proxy @(Text "err"))) $ combine'' fcomb f'

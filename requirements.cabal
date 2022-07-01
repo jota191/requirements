@@ -21,7 +21,7 @@ cabal-version:       >=1.10
 
 library
   exposed-modules:     Data.Type.Require
-  other-modules:       Figures, Vector
+  --other-modules:       Figures, Vector
   other-extensions:  UndecidableInstances  
                   ,  MultiParamTypeClasses 
                   ,  FlexibleContexts      
