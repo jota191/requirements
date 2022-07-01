@@ -97,7 +97,7 @@ Then, the wrapper instance:
 >   type ReqR (OpGet n k a) =
 >     ReqR (OpGet' (Lt n k) n k a)
 >   req proxy (OpGet (n :: SNat n) (v :: Vec k a)) =
->     req proxy (OpGet' (Proxy @ (Lt n k)) n v)
+>     req proxy (OpGet' (Proxy @(Lt n k)) n v)
 
 Now we program the good cases:
 
@@ -134,7 +134,7 @@ infraestructure.
 >   type ReqR (OpGet' False n k a) = OpError (Text "lala")
 >   req = error "unreachable"
 
-> get n v = req (Proxy @ '[Text "getting"]) (OpGet n v)
+> get n v = req (Proxy @( '[ 'Text "getting"])) (OpGet n v)
 
 
 > vecEx = 'a' :< 'b' :< 'c' :< 'd' :< VNil

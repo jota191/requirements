@@ -172,8 +172,8 @@ type family IsEmptyMsg (m :: ErrorMessage) :: Bool where
   IsEmptyMsg other = False
 
 -- -- | Formatting of context printing.
-type family ShowCTX (ctx :: k)  :: ErrorMessage where
-  ShowCTX ('[] :: [ErrorMessage]) = Text ""
+type family ShowCTX (ctx :: [ErrorMessage])  :: ErrorMessage where
+  ShowCTX ('[]) = 'Text ""
   ShowCTX ((m :: ErrorMessage) ': (ms :: [ErrorMessage])) = m :$$: ShowCTX ms
   ShowCTX (m :: [ErrorMessage]) = Text ""
 
@@ -216,15 +216,15 @@ type family AssertEq (t1 :: k)(t2 :: k) ctx :: Constraint where
 
 
 
-data Exp (a :: k) where Exp :: a -> Exp a
+data Exp (a :: Type) where Exp :: a -> Exp a
 type family Eval (exp :: Type) :: k
 
-data CondEq (a ::k) (b :: k) where
+data CondEq (a ::Type) (b :: Type) where
   CondEq :: a -> b -> CondEq a b
-data RequireEqResF (a ::k) (b :: k) where
+data RequireEqResF (a :: Type) (b :: Type) where
   RequireEqResF :: a -> b -> RequireEqResF a b
 
-data EqMsg (a::k)(b::k) where EqMsg :: a -> b -> EqMsg a b
+data EqMsg (a::Type)(b::Type) where EqMsg :: a -> b -> EqMsg a b
 type instance Eval (EqMsg t1 t2) =
     (Text "\nEQMSG" :<>: ShowTE t1
                        :<>: Text "\n/= " :<>: ShowTE t2)
@@ -261,7 +261,7 @@ type family RequireEqRes (t1 :: k) (t2 :: k)
     (Require (OpError (Text "\n   " :<>: ShowTE t1
                        :<>: Text "\n/= " :<>: ShowTE t2)) ctx)
 
-type family Equal (a :: k) (b :: k') :: Bool where
+type family Equal (a :: k) (b :: k) :: Bool where
   Equal a a = True
   Equal a b = False
 
